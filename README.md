@@ -76,7 +76,8 @@ Flashing via **Samsung Odin** (or **Odin4** on Linux) in the **AP** slot using a
 The following instructions allow developers to rebuild and verify the recovery from source.
 
 ### Build Workflow Overview
-1. **Obtain Working ADB Base Recovery**: Use the working ADB user-shell milestone recovery image (`8ff126c0acd2906c2dd4ce4942f1261f72b70e6cf4a8aa5b08f86e3864e0afce`, extracted from `recover.tar`). *(Note: Rebuilding directly from the earliest fastbootd-only image is not yet automated; see [Project Lineage / Provenance](#project-lineage--provenance).)* (grab the fastbootd patched [here](https://github.com/w111user/Patch-Recovery/releases/download/25625329948/fastbootd-recovery.tar.md5) if you want)
+1. **Obtain Working ADB Base Recovery**: Use the working ADB user-shell milestone recovery image (`8ff126c0acd2906c2dd4ce4942f1261f72b70e6cf4a8aa5b08f86e3864e0afce`, extracted from `recover.tar`). *(Note: Rebuilding directly from the earliest fastbootd-only image is not yet automated; see [Project Lineage / Provenance](#project-lineage--provenance).)* (For historical reference only, the earlier fastbootd-only baseline is available [here](https://github.com/w111user/Patch-Recovery/releases/download/25625329948/fastbootd-recovery.tar.md5).
+It is NOT a valid direct input for the current build script.)
 2. **Extract System Libraries**: Extract `/system/lib64` from the base ramdisk so `lpmode` can link against target Bionic libraries.
 3. **Compile `lpmode`**: Assemble and link `src/lpmode/lpmode.s` as an AArch64 PIE binary.
 4. **Supply Magisk v30.7 APK**: Provide the official Magisk APK so the build script can extract the proven static BusyBox.
