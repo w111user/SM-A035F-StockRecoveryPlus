@@ -11,7 +11,7 @@ If you only want to install and use this recovery, you **do not** need to compil
 ### What You Need
 - A Samsung Galaxy A03 (`SM-A035F`) with an unlocked bootloader
 - A PC with **Samsung Odin** (Windows) or **Odin4** (Linux)
-- A USB-C data cable
+- A USB data cable
 
 > [!NOTE]
 > Normal users do **NOT** need Clang, LLVM, `magiskboot`, the Magisk APK, the baseline recovery image, nor do you need to compile `lpmode` or run `build-recovery.sh`. Pre-packaged Odin TARs are provided ready-to-flash.
