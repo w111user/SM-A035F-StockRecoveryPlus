@@ -1,56 +1,155 @@
-# Multi-Format Patched Recovery for Samsung Galaxy A03 (SM-A035F)
+# SM-A035F StockRecoveryPlus
 
-A patchset, userland compatibility layer, and dynamic partition mapper for the **Samsung Galaxy A03 (`SM-A035F`)** built upon an existing **fastbootd-enabled recovery base**. This project enables unsigned package installation, legacy Non-A/B `update-binary` execution, and automatic dynamic partition mapping while maintaining the official recovery UI, fastbootd mode, and root ADB.
-
-> [!IMPORTANT]
-> **Project Lineage & Provenance**:
-> This project did **NOT** begin directly from an untouched upstream Samsung stock recovery. The starting baseline was a pre-existing Galaxy A03 recovery image that had already been modified to support `fastbootd`.
-> 
-> ```
-> Samsung Stock Recovery Upstream (pure stock, no fastbootd)
->     ↓
-> Pre-existing Fastbootd-Enabled SM-A035F Recovery Base (Project Baseline)
->     ↓
-> This Project's Patch Series:
->   • ADB root (uid=0, gid=0, full Linux capabilities)
->   • SELinux global permissive
->   • Unsigned package signature verification bypass
->   • Metadata fallback to legacy Non-A/B update-binary
->   • Userland compatibility (/sbin/sh, BusyBox applets, blkid)
->   • Dynamic partition mapping (lpmode + lpmode-run wrapper)
->     ↓
-> Final Verified Recovery Build (final2)
-> ```
-> Direct transformation of a completely untouched Samsung stock recovery into this final build has **not been reproduced** and is **not supported** by the build scripts.
+An enhanced stock recovery for the **Samsung Galaxy A03 (`SM-A035F`)** that enables unsigned ZIP flashing, legacy Non-A/B `update-binary` execution (e.g. Magisk), and dynamic partition mapping while fully preserving the official Samsung recovery UI, fastbootd mode, and root ADB shell.
 
 ---
 
-## Baseline Recovery Image (Project Starting Point)
+## Quick Start for Normal Users
 
-The verified starting baseline recovery image for all patches in this repository:
+If you only want to install and use this recovery, you **do not** need to compile anything or set up developer tools.
 
-- **Source Archive**: `recover.tar` (SHA256: `eabb15415804aef5e2034c08e627456c115911abbab057fd85b7486c46594b2c`)
-- **Base Image**: `recovery.img`
-- **SHA256**: `8ff126c0acd2906c2dd4ce4942f1261f72b70e6cf4a8aa5b08f86e3864e0afce`
-- **Size**: `67,108,864` bytes (64 MB)
-- **Header Info**: Android Boot Image Header Version 2
-- **Kernel Size**: `23,717,904` bytes | **Ramdisk Size**: `11,319,676` bytes
+### What You Need
+- A Samsung Galaxy A03 (`SM-A035F`) with an unlocked bootloader
+- A PC with **Samsung Odin** (Windows) or **Odin4** (Linux)
+- A USB-C data cable
+
+> [!NOTE]
+> Normal users do **NOT** need Clang, LLVM, `magiskboot`, the Magisk APK, the baseline recovery image, nor do you need to compile `lpmode` or run `build-recovery.sh`. Pre-packaged Odin TARs are provided ready-to-flash.
+
+### Installation Steps
+1. **Download**: Grab the latest release TAR (`recovery_root_permissive_multiformat_lpmapped_final2.tar`) from the [GitHub Releases](../../releases) page.
+2. **Reboot to Download Mode**: Power off the device completely, hold both **Volume Up + Volume Down**, and connect the USB cable to your computer until the blue Download Mode warning appears; press **Volume Up** to confirm.
+3. **Flash with Odin**:
+   - Open Samsung Odin on Windows (or Odin4 on Linux).
+   - Load the downloaded `.tar` file into the **AP** slot.
+   - Click **Start** to flash.
+4. **Boot Recovery**: Immediately after flashing, reboot directly into recovery by holding **Power + Volume Up** until the recovery menu appears.
+
+> [!TIP]
+> The build instructions below are **only** for developers who want to inspect or reproduce the recovery from source.
+
+---
+
+## Features
+
+- **Root ADB Shell**: Persistent `uid=0`, `gid=0` shell with full Linux capability bounding set preserved across privilege-drop routines.
+- **SELinux Permissive**: Globally permissive policy initialization at early boot.
+- **Unrestricted Sideload & SD Update**: Complete signature verification bypass for both ADB sideload and SD-card updates.
+- **Multi-Format / Non-A/B Fallback**: Automatic redirection of metadata-less packages (e.g., Magisk APK renamed to ZIP) into Samsung's internal legacy `update-binary` interpreter.
+- **Dynamic Partition Auto-Mapping (`lpmode`)**: Standalone AArch64 PIE helper that calls `libfs_mgr.so` to create `/dev/block/mapper/{system, system_ext, vendor}` at boot.
+- **Userland Compatibility**: `/sbin/sh` interpreter resolution, `/system/bin/blkid` linkage, and static BusyBox tooling (`unzip`, `awk`, `hexdump`).
+- **Preserved Fastbootd**: Official `fastbootd` service and userspace partition commands remain operational.
+- **Proven Magisk v30.7 Sideload**: Verified end-to-end (`Install from ADB completed with status 0`).
+
+---
+
+## Supported / Verified Target
+
+- **Device**: Samsung Galaxy A03 (`SM-A035F`)
+- **Chipset**: Unisoc UMS9230-AB (`SRPUH31A009`, `console=ttyS1,115200n8`)
 - **Recovery Boot Image OS Version**: `11.0.0`
 - **Recovery Boot Image Patch Level**: `2025-08`
-- **Chipset**: Unisoc UMS9230-AB (`SRPUH31A009`, `console=ttyS1,115200n8`)
-- **Key Feature of Base**: Pre-existing `system/bin/fastbootd` and init configurations.
+- **Fastbootd Baseline Recovery SHA256**: `8ff126c0acd2906c2dd4ce4942f1261f72b70e6cf4a8aa5b08f86e3864e0afce`
+- **Final2 Recovery Image SHA256**: `261f5c284a823cc8f9e309b4d589ca83cb6a98720d356c2e362a787b7449224a`
+- **Final2 Odin TAR SHA256**: `51e9a33e27d9d0b2849192d1c7acf88e62958a7fd4fc6121dc658b1c1649c48b`
+
+> [!WARNING]
+> Binary patch offsets are **strictly firmware/build-specific** to this recovery image. Do not attempt to apply these raw offsets to other devices or differing firmware revisions without disassembling and verifying the target functions.
 
 ---
 
-## Features Added by This Project
+## Flashing Instructions
 
-- **Root ADB Shell**: Persistent `uid=0`, `gid=0` shell with full Linux capabilities preserved across privilege-drop routines.
-- **SELinux Permissive**: Globally permissive policy initialization at boot.
-- **Unrestricted Sideload & SD Update**: Complete signature verification bypass for ADB sideload and SD-card updates.
-- **Multi-Format / Non-A/B Fallback**: Automatic redirection of metadata-less packages (e.g., Magisk APK renamed to ZIP) into Samsung's internal legacy `update-binary` interpreter.
-- **Dynamic Partition Auto-Mapping (`lpmode`)**: Standalone AArch64 PIE helper invoking Samsung's `libfs_mgr.so` to create `/dev/block/mapper/{system, system_ext, vendor}` on recovery boot.
-- **Userland Compatibility**: `/sbin/sh` interpreter resolution, `/system/bin/blkid` link, and static BusyBox tooling (`unzip`, `awk`, `hexdump`).
-- **Proven Magisk v30.7 Installation**: Verified end-to-end (`Install from ADB completed with status 0`).
+### Proven Method: Samsung Odin / Odin4
+Flashing via **Samsung Odin** (or **Odin4** on Linux) in the **AP** slot using a TAR package containing `recovery.img` is the **only proven and tested installation method** for this project.
+
+> [!CAUTION]
+> - **Fastbootd Partition Flashing is NOT Proven**: While `fastbootd` mode runs inside this recovery for managing dynamic logical partitions, writing or updating the `recovery` partition itself through `fastbootd` is **not supported** and was not used during development.
+> - **Heimdall Flashing is UNTESTED**: Flashing via Heimdall has not been validated for this firmware base.
+> - **Do NOT attempt automated or unverified flashing tools.**
+
+---
+
+## Developer / Reproducible Build
+
+The following instructions allow developers to rebuild and verify the recovery from source.
+
+### Build Workflow Overview
+1. **Obtain Base Recovery**: Use the exact fastbootd-enabled baseline recovery image (`8ff126c0acd2906c2dd4ce4942f1261f72b70e6cf4a8aa5b08f86e3864e0afce`).
+2. **Extract System Libraries**: Extract `/system/lib64` from the base ramdisk so `lpmode` can link against target Bionic libraries.
+3. **Compile `lpmode`**: Assemble and link `src/lpmode/lpmode.s` as an AArch64 PIE binary.
+4. **Supply Magisk v30.7 APK**: Provide the official Magisk APK so the build script can extract the proven static BusyBox.
+5. **Run `build-recovery.sh`**: The build script verifies hashes, applies binary patches, patches `init.rc`, injects compatibility files, and repacks `recovery.img` and the Odin TAR.
+
+### 1. Prerequisites
+- Linux x86_64 host
+- Clang & LLVM tools (`clang-21`, `ld.lld`, `llvm-strip` or equivalents with AArch64 target support)
+- Python 3.8+
+- `magiskboot` (from Magisk or Android platform tools)
+- Fastbootd-enabled baseline recovery image (`8ff126c0acd2906c2dd4ce4942f1261f72b70e6cf4a8aa5b08f86e3864e0afce`)
+- Official Magisk v30.7 APK
+
+### 2. Compile `lpmode`
+`lpmode` is an AArch64 PIE executable that calls `android::fs_mgr::CreateLogicalPartitions` at boot. It must dynamically link against the target recovery's Samsung Bionic libraries (`libfs_mgr.so`, `libc++.so`, and `libc.so`).
+
+Extract `system/lib64` from your baseline recovery ramdisk, then run:
+```bash
+./src/lpmode/build.sh /path/to/extracted/system/lib64
+```
+Verify that the output binary (`src/lpmode/lpmode_stripped`) has SHA256:
+`20cd4d0014b920f5b799bd4ab03d93838886ecdcfff4e186a5b038070b4f0ae2`
+
+### 3. Patch & Repack Recovery
+Execute the main build script:
+```bash
+./scripts/build-recovery.sh \
+    /path/to/fastbootd_base_recovery.img \
+    /path/to/magiskboot \
+    /path/to/Magisk-v30.7.apk \
+    ./dist
+```
+
+**Arguments explained**:
+1. `/path/to/fastbootd_base_recovery.img`: The exact baseline recovery image (SHA256 verified).
+2. `/path/to/magiskboot`: Path to the `magiskboot` binary for image unpacking/repacking.
+3. `/path/to/Magisk-v30.7.apk`: Used solely to extract `lib/arm64-v8a/libbusybox.so` (SHA256 verified).
+4. `./dist`: Output directory for generated artifacts.
+
+**What the script executes**:
+- Verifies SHA256 hashes of the base image, `lpmode_stripped`, and the extracted BusyBox.
+- Applies binary patches to `system/bin/recovery`, `system/bin/adbd`, and `system/bin/init`.
+- Applies the unified patch to `system/etc/init/hw/init.rc`.
+- Injects compatibility symlinks (`/sbin/sh -> /system/bin/sh`, `/system/bin/blkid -> /system/bin/toybox`).
+- Installs `/sbin/busybox` and creates applet symlinks (`unzip`, `awk`, `hexdump`).
+- Injects `/system/bin/lpmode` and `/system/bin/lpmode-run`.
+- Verifies all modifications using `scripts/verify-recovery.py`.
+- Repacks `ramdisk.cpio`, `recovery.img`, and generates `recovery_patched.tar`.
+
+---
+
+## Project Lineage / Provenance
+
+This project did **NOT** begin directly from an untouched upstream Samsung stock recovery. The development lineage is:
+
+```
+Upstream Samsung Stock Recovery (pure stock, no fastbootd)
+    ↓
+Pre-existing Fastbootd-Enabled SM-A035F Recovery Base (Project Baseline)
+    │  (SHA256: 8ff126c0acd2906c2dd4ce4942f1261f72b70e6cf4a8aa5b08f86e3864e0afce)
+    │  (From recover.tar: eabb15415804aef5e2034c08e627456c115911abbab057fd85b7486c46594b2c)
+    ↓
+This Project's Patch Series:
+    1. Root ADB (uid=0, gid=0, full Linux capabilities)
+    2. SELinux global permissive (init patch + early-init setenforce 0)
+    3. Unsigned package signature bypass (recovery 0x3f6bc)
+    4. Metadata fallback to legacy Non-A/B update-binary (recovery 0x3d494)
+    5. Userland compatibility (/sbin/sh, static BusyBox applets, blkid)
+    6. Dynamic partition mapping (lpmode + lpmode-run wrapper)
+    ↓
+Final Verified Recovery Build (final2)
+```
+
+Direct transformation of an untouched upstream stock recovery into this build has not been reproduced and is not supported.
 
 ---
 
@@ -89,58 +188,21 @@ The verified starting baseline recovery image for all patches in this repository
 
 ---
 
-## Building
+## Runtime Validation
 
-### 1. Prerequisites
-- Linux x86_64 host
-- Clang & LLVM tools (`clang-21`, `ld.lld`, `llvm-strip` or equivalents with AArch64 target support)
-- Python 3.8+
-- `magiskboot`
-- The proven **fastbootd-enabled base image** (`8ff126c0acd2906c2dd4ce4942f1261f72b70e6cf4a8aa5b08f86e3864e0afce`)
-- Official **Magisk v30.7 APK** (for static BusyBox extraction)
+All modifications were tested and confirmed on a live device:
+- Dynamic partition device-mapper nodes created on boot:
+  - `/dev/block/mapper/system -> /dev/block/dm-0`
+  - `/dev/block/mapper/system_ext -> /dev/block/dm-1`
+  - `/dev/block/mapper/vendor -> /dev/block/dm-2`
+- Post-fs hook `/system/bin/lpmode-run` executed in `u:r:recovery:s0` exiting with status 0.
+- Magisk v30.7 sideload completed successfully: `Install from ADB completed with status 0`.
 
-### 2. Compile `lpmode`
-Extract `system/lib64` from your base recovery ramdisk and compile:
-```bash
-./src/lpmode/build.sh /path/to/extracted/system/lib64
-```
-Verify the output binary has SHA256:
-`20cd4d0014b920f5b799bd4ab03d93838886ecdcfff4e186a5b038070b4f0ae2`
-
-### 3. Patch & Repack Recovery
-Run the build script with all required components:
-```bash
-./scripts/build-recovery.sh \
-    /path/to/fastbootd_base_recovery.img \
-    /path/to/magiskboot \
-    /path/to/Magisk-v30.7.apk \
-    ./dist
-```
-The script will automatically:
-- Extract `lib/arm64-v8a/libbusybox.so` from the Magisk APK
-- Validate its SHA256 against the proven hash (`4d60ab3f5a59ebb2ca863f2f514e6924401b581e9b64f602665c008177626651`)
-- Install `/sbin/busybox` and create applet symlinks (`unzip`, `awk`, `hexdump`)
-- Apply binary patches to `recovery`, `adbd`, and `init`
-- Patch `init.rc` and install `lpmode` + `lpmode-run`
-- Verify all modifications and generate the Odin flashable TAR
-
----
-
-## Flashing Instructions
-
-### Proven Flashing Method: Samsung Odin
-The only proven and verified method for installing this recovery on the Galaxy A03 is flashing via **Samsung Odin / Odin4**:
-1. Place the device into **Download Mode** (vol down + vol up while connecting USB).
-2. Load the output TAR package (`recovery_patched.tar` or `recovery_root_permissive_multiformat_lpmapped_final2.tar`) into the **AP** slot.
-3. Flash the image.
-
-> [!CAUTION]
-> - **Fastbootd Partition Flashing is NOT Proven**: Although this recovery includes working `fastbootd` mode support internally for userspace partition operations, writing or updating the `recovery` partition itself through `fastbootd` is **not supported** and was not the method used during development.
-> - **Heimdall Flashing is UNTESTED**: Flashing PIT/partitions using Heimdall has not been validated for this firmware base.
-> - **Do NOT attempt automated or unverified flashing tools.**
+For detailed command logs and output traces, refer to [docs/runtime-validation.md](docs/runtime-validation.md).
 
 ---
 
 ## License
-Source code, scripts, and documentation are licensed under the [Apache License 2.0](LICENSE).
-Proprietary Samsung binaries, libraries, and vendor partition images are not redistributed.
+
+Source code, scripts, and documentation are licensed under the [Apache License 2.0](LICENSE).  
+Proprietary Samsung binaries, libraries, and base recovery partition images are not redistributed.
