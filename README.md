@@ -168,7 +168,7 @@ Upstream Samsung Stock Recovery (pure stock, no fastbootd)
 
 > [!IMPORTANT]
 > - **Historical Origin vs. Build Input**: `fastbootd-recovery.tar.md5` represents the historical starting point of fastbootd porting, whereas `recover.tar` (`8ff126c0...`) represents the subsequent milestone where user-shell ADB was working.
-> - The current `build-recovery.sh` takes `8ff126c0...` as its input base; automating the transition from `fastbootd-only` to `working ADB` is not yet implemented in this repository.
+> - The transition from the historical fastbootd-only image to the working ADB user-shell milestone is fully automated via `scripts/enable-adb-user.sh`. The main script `scripts/build-recovery.sh` then consumes this milestone image to apply the root privilege retention, userland compatibility, and dynamic partition mapper stages.
 
 ---
 
@@ -183,7 +183,7 @@ Forensic bit-level comparison between the **earliest fastbootd-only base** (`fas
 - Ramdisk filesystem entries and directory structure are **identical**.
 
 ### The Technical Mechanism
-The earliest fastbootd recovery already had a fully configured `adbd` service and functioning USB gadget enumeration. However, ADB appeared unusable (`device unauthorized`) because `ro.adb.secure=1` enforced host RSA key verification against `/data/misc/adb/adb_keys`. Because `/data` is inaccessible in recovery and the recovery UI lacks interactive user authentication dialogs, ADB access was permanently blocked.
+The earliest fastbootd recovery already had a fully configured `adbd` service, FunctionFS mount, and USB gadget enumeration. However, ADB appeared unusable (`device unauthorized`) because `ro.adb.secure=1` enforced host RSA key verification against `/data/misc/adb/adb_keys`. Because `/data` is inaccessible in recovery and the recovery UI lacks interactive user authentication dialogs, ADB access was permanently blocked.
 
 Setting `ro.adb.secure=0` disabled RSA authorization enforcement, enabling immediate, unauthenticated non-root user shell access (`uid=2000`).
 
@@ -200,6 +200,37 @@ Out of 24,247,012 bytes in the uncompressed ramdisk CPIO, **exactly 1 byte diffe
 
 > [!NOTE]
 > This stage **only enabled an unprivileged user shell** (`shell` user: `uid=2000`, `gid=2000`). No `adbd` binary patches, `init` binary patches, or SELinux policy modifications were involved. Persistent root privilege retention was introduced in a subsequent, separate patch stage.
+
+---
+
+## Enable Non-Root ADB on the Fastbootd-Only Base
+
+The historical fastbootd-only image (`461a0344e6d7018fe0b1ee76e526458ce1aa9f66f2aaabf8f592e980bc4e4e77`) can be transformed into the working non-root ADB user-shell milestone using the reproducible helper script `scripts/enable-adb-user.sh`:
+
+```bash
+./scripts/enable-adb-user.sh \
+    /path/to/fastbootd-only-recovery.img \
+    /path/to/magiskboot \
+    ./dist
+```
+
+### What the Script Executes
+1. Verifies the input recovery image SHA256 against `461a0344e6d7018fe0b1ee76e526458ce1aa9f66f2aaabf8f592e980bc4e4e77`.
+2. Unpacks the recovery image using `magiskboot`.
+3. Verifies that `prop.default` contains `ro.adb.secure=1`.
+4. Performs an exact in-place byte patch (`ro.adb.secure=1` $\rightarrow$ `ro.adb.secure=0`) on `ramdisk.cpio`.
+5. Verifies that `ro.adb.secure=0` is present and `ro.adb.secure=1` is absent.
+6. Repacks the recovery image as `recovery_fastbootd_adb_user.img` and creates an Odin TAR (`recovery_fastbootd_adb_user.tar`).
+7. Confirms that the generated image is **100% bit-identical** to the verified milestone recovery (`8ff126c0acd2906c2dd4ce4942f1261f72b70e6cf4a8aa5b08f86e3864e0afce`).
+
+### Pipeline Execution Order
+```text
+Historical Fastbootd-Only Recovery (461a0344...)
+    ↓  [scripts/enable-adb-user.sh]
+Working Non-Root ADB User-Shell Milestone (8ff126c0...)
+    ↓  [scripts/build-recovery.sh]
+Final Multi-Format Root Recovery (final2, 261f5c28...)
+```
 
 ---
 
@@ -220,6 +251,7 @@ Out of 24,247,012 bytes in the uncompressed ramdisk CPIO, **exactly 1 byte diffe
 │       └── README.md
 ├── scripts/                  # Build, patching, and verification scripts
 │   ├── build-recovery.sh     # Repack workflow (requires fastbootd base & Magisk APK)
+│   ├── enable-adb-user.sh    # Historical non-root ADB enablement script
 │   ├── patch-recovery.py     # Binary patcher using offsets.json
 │   ├── verify-recovery.py    # Offline patch & link verifier
 │   └── lpmode-run            # Idempotent init wrapper for lpmode

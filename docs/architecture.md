@@ -10,7 +10,7 @@ Earliest Fastbootd-Only Project Baseline (No working ADB)
   │  • Release: https://github.com/w111user/Patch-Recovery/releases/tag/25625329948
   │  • Asset SHA256: a5294ab70c209fd0cc10abc294f4a867d6cc25cb02b984fd097d935c3c7e7101
   │
-  ▼  [ADB Enablement Work — Historical milestone]
+  ▼  [ADB Enablement: scripts/enable-adb-user.sh]
   │
 Working ADB User-Shell Milestone / Base [Current Reproducible Build Input]
   │  • Source: recover.tar (SHA256: eabb15415804aef5e2034c08e627456c115911abbab057fd85b7486c46594b2c)

@@ -26,9 +26,10 @@
 - Patched `system/bin/init` at `0xeb4c0` (`e0 03 1f 2a`) to enforce global SELinux Permissive mode.
 
 ## Historical Baseline 2 — Working ADB User-Shell Milestone
+- Automated via `scripts/enable-adb-user.sh` from Historical Baseline 1.
 - Source archive: `recover.tar` (SHA256: `eabb15415804aef5e2034c08e627456c115911abbab057fd85b7486c46594b2c`)
 - Extracted `recovery.img` (SHA256: `8ff126c0acd2906c2dd4ce4942f1261f72b70e6cf4a8aa5b08f86e3864e0afce`)
-- Functional fastbootd + functional unprivileged user ADB daemon.
+- Functional fastbootd + functional unprivileged user ADB daemon (`ro.adb.secure=0`).
 - Serves as the **current reproducible build input** for `build-recovery.sh`.
 
 ## Historical Baseline 1 — Earliest Fastbootd-Only Project Baseline
