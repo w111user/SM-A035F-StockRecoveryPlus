@@ -277,10 +277,12 @@ Final Multi-Format Root Recovery (final2, 261f5c28...)
 │       ├── build.sh
 │       └── README.md
 ├── scripts/                  # Build, patching, and verification scripts
+│   ├── avbtool 
 │   ├── build-recovery.sh     # Repack workflow (requires fastbootd base & Magisk APK)
 │   ├── enable-adb-user.sh    # Historical non-root ADB enablement script
 │   ├── patch-recovery.py     # Binary patcher using offsets.json
 │   ├── verify-recovery.py    # Offline patch & link verifier
+│   ├── magiskboot
 │   └── lpmode-run            # Idempotent init wrapper for lpmode
 ├── patches/                  # Binary patch definitions & diffs
 │   ├── recovery.md
