@@ -172,6 +172,37 @@ Upstream Samsung Stock Recovery (pure stock, no fastbootd)
 
 ---
 
+## Historical ADB Enablement
+
+Forensic bit-level comparison between the **earliest fastbootd-only base** (`fastbootd-recovery.tar.md5`, `recovery.img` SHA256: `461a0344e6d7018fe0b1ee76e526458ce1aa9f66f2aaabf8f592e980bc4e4e77`) and the **working ADB user-shell milestone** (`recover.tar`, `recovery.img` SHA256: `8ff126c0acd2906c2dd4ce4942f1261f72b70e6cf4a8aa5b08f86e3864e0afce`) reveals that:
+
+- Kernel, DTB, and recovery DTBO are bit-for-bit **identical**.
+- `system/bin/adbd`, `system/bin/init`, and `system/bin/recovery` binaries are bit-for-bit **identical** (no binary patches were applied at this stage).
+- SELinux `sepolicy`, `file_contexts`, and `property_contexts` are **identical**.
+- Init rc files, USB gadget configfs triggers, FunctionFS mounts, and service declarations are **identical**.
+- Ramdisk filesystem entries and directory structure are **identical**.
+
+### The Technical Mechanism
+The earliest fastbootd recovery already had a fully configured `adbd` service and functioning USB gadget enumeration. However, ADB appeared unusable (`device unauthorized`) because `ro.adb.secure=1` enforced host RSA key verification against `/data/misc/adb/adb_keys`. Because `/data` is inaccessible in recovery and the recovery UI lacks interactive user authentication dialogs, ADB access was permanently blocked.
+
+Setting `ro.adb.secure=0` disabled RSA authorization enforcement, enabling immediate, unauthenticated non-root user shell access (`uid=2000`).
+
+### The Complete Verified Change
+Out of 24,247,012 bytes in the uncompressed ramdisk CPIO, **exactly 1 byte differs** at offset `0xc2` in `prop.default` (`0x31` / `'1'` $\rightarrow$ `0x30` / `'0'`):
+
+```diff
+--- prop.default
++++ prop.default
+@@
+-ro.adb.secure=1
++ro.adb.secure=0
+```
+
+> [!NOTE]
+> This stage **only enabled an unprivileged user shell** (`shell` user: `uid=2000`, `gid=2000`). No `adbd` binary patches, `init` binary patches, or SELinux policy modifications were involved. Persistent root privilege retention was introduced in a subsequent, separate patch stage.
+
+---
+
 ## Repository Structure
 
 ```
