@@ -2,7 +2,8 @@
   "target_device": "Samsung Galaxy A03 (SM-A035F)",
   "recovery_header_os_version": "11.0.0",
   "recovery_header_patch_level": "2025-08",
-  "baseline_sha256": "8ff126c0acd2906c2dd4ce4942f1261f72b70e6cf4a8aa5b08f86e3864e0afce",
+  "reproducible_build_input_sha256": "8ff126c0acd2906c2dd4ce4942f1261f72b70e6cf4a8aa5b08f86e3864e0afce",
+  "earliest_fastbootd_baseline_asset_sha256": "a5294ab70c209fd0cc10abc294f4a867d6cc25cb02b984fd097d935c3c7e7101",
   "binary_patches": {
     "system/bin/recovery": [
       {

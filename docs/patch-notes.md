@@ -1,6 +1,6 @@
 # Binary Patch Notes
 
-All binary patches in this repository apply directly to AArch64 machine code found in the **fastbootd-enabled SM-A035F recovery base** (`8ff126c0acd2906c2dd4ce4942f1261f72b70e6cf4a8aa5b08f86e3864e0afce`).
+All binary patches in this repository apply directly to AArch64 machine code found in the **working ADB user-shell milestone recovery base** (`8ff126c0acd2906c2dd4ce4942f1261f72b70e6cf4a8aa5b08f86e3864e0afce`, extracted from `recover.tar`).
 
 ## 1. `system/bin/recovery`
 - **Metadata Fallback (`0x3d494`)**:

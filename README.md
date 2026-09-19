@@ -49,7 +49,8 @@ If you only want to install and use this recovery, you **do not** need to compil
 - **Chipset**: Unisoc UMS9230-AB (`SRPUH31A009`, `console=ttyS1,115200n8`)
 - **Recovery Boot Image OS Version**: `11.0.0`
 - **Recovery Boot Image Patch Level**: `2025-08`
-- **Fastbootd Baseline Recovery SHA256**: `8ff126c0acd2906c2dd4ce4942f1261f72b70e6cf4a8aa5b08f86e3864e0afce`
+- **Earliest Fastbootd-Only Baseline Asset SHA256**: `a5294ab70c209fd0cc10abc294f4a867d6cc25cb02b984fd097d935c3c7e7101`
+- **Working ADB User-Shell Milestone Recovery SHA256**: `8ff126c0acd2906c2dd4ce4942f1261f72b70e6cf4a8aa5b08f86e3864e0afce`
 - **Final2 Recovery Image SHA256**: `261f5c284a823cc8f9e309b4d589ca83cb6a98720d356c2e362a787b7449224a`
 - **Final2 Odin TAR SHA256**: `51e9a33e27d9d0b2849192d1c7acf88e62958a7fd4fc6121dc658b1c1649c48b`
 
@@ -75,7 +76,7 @@ Flashing via **Samsung Odin** (or **Odin4** on Linux) in the **AP** slot using a
 The following instructions allow developers to rebuild and verify the recovery from source.
 
 ### Build Workflow Overview
-1. **Obtain Base Recovery**: Use the exact fastbootd-enabled baseline recovery image (`8ff126c0acd2906c2dd4ce4942f1261f72b70e6cf4a8aa5b08f86e3864e0afce`).
+1. **Obtain Working ADB Base Recovery**: Use the working ADB user-shell milestone recovery image (`8ff126c0acd2906c2dd4ce4942f1261f72b70e6cf4a8aa5b08f86e3864e0afce`, extracted from `recover.tar`). *(Note: Rebuilding directly from the earliest fastbootd-only image is not yet automated; see [Project Lineage / Provenance](#project-lineage--provenance).)*
 2. **Extract System Libraries**: Extract `/system/lib64` from the base ramdisk so `lpmode` can link against target Bionic libraries.
 3. **Compile `lpmode`**: Assemble and link `src/lpmode/lpmode.s` as an AArch64 PIE binary.
 4. **Supply Magisk v30.7 APK**: Provide the official Magisk APK so the build script can extract the proven static BusyBox.
@@ -86,7 +87,7 @@ The following instructions allow developers to rebuild and verify the recovery f
 - Clang & LLVM tools (`clang-21`, `ld.lld`, `llvm-strip` or equivalents with AArch64 target support)
 - Python 3.8+
 - `magiskboot` (from Magisk or Android platform tools)
-- Fastbootd-enabled baseline recovery image (`8ff126c0acd2906c2dd4ce4942f1261f72b70e6cf4a8aa5b08f86e3864e0afce`)
+- Working ADB user-shell milestone recovery image (`8ff126c0acd2906c2dd4ce4942f1261f72b70e6cf4a8aa5b08f86e3864e0afce`)
 - Official Magisk v30.7 APK
 
 ### 2. Compile `lpmode`
@@ -110,7 +111,7 @@ Execute the main build script:
 ```
 
 **Arguments explained**:
-1. `/path/to/fastbootd_base_recovery.img`: The exact baseline recovery image (SHA256 verified).
+1. `/path/to/fastbootd_base_recovery.img`: Working ADB user-shell milestone recovery image (`8ff126c0...`, SHA256 verified).
 2. `/path/to/magiskboot`: Path to the `magiskboot` binary for image unpacking/repacking.
 3. `/path/to/Magisk-v30.7.apk`: Used solely to extract `lib/arm64-v8a/libbusybox.so` (SHA256 verified).
 4. `./dist`: Output directory for generated artifacts.
@@ -129,27 +130,44 @@ Execute the main build script:
 
 ## Project Lineage / Provenance
 
-This project did **NOT** begin directly from an untouched upstream Samsung stock recovery. The development lineage is:
+This project did **NOT** begin directly from an untouched upstream Samsung stock recovery. The complete historical development lineage is:
 
 ```
 Upstream Samsung Stock Recovery (pure stock, no fastbootd)
-    ↓
-Pre-existing Fastbootd-Enabled SM-A035F Recovery Base (Project Baseline)
-    │  (SHA256: 8ff126c0acd2906c2dd4ce4942f1261f72b70e6cf4a8aa5b08f86e3864e0afce)
-    │  (From recover.tar: eabb15415804aef5e2034c08e627456c115911abbab057fd85b7486c46594b2c)
-    ↓
-This Project's Patch Series:
-    1. Root ADB (uid=0, gid=0, full Linux capabilities)
-    2. SELinux global permissive (init patch + early-init setenforce 0)
-    3. Unsigned package signature bypass (recovery 0x3f6bc)
-    4. Metadata fallback to legacy Non-A/B update-binary (recovery 0x3d494)
-    5. Userland compatibility (/sbin/sh, static BusyBox applets, blkid)
-    6. Dynamic partition mapping (lpmode + lpmode-run wrapper)
-    ↓
-Final Verified Recovery Build (final2)
+    │
+    ▼
+1. Earliest Fastbootd-Only Project Baseline (No Working ADB)
+    │  • GitHub Release: https://github.com/w111user/Patch-Recovery/releases/tag/25625329948
+    │  • Asset: fastbootd-recovery.tar.md5
+    │  • Asset SHA256: a5294ab70c209fd0cc10abc294f4a867d6cc25cb02b984fd097d935c3c7e7101
+    │  • Earliest port enabling fastbootd; ADB was not functional.
+    │
+    ▼  [ADB Enablement Work — Historical milestone, not yet scripted]
+    │
+2. Working ADB User-Shell Milestone / Base [Current Reproducible Build Input]
+    │  • Source Archive: recover.tar (SHA256: eabb15415804aef5e2034c08e627456c115911abbab057fd85b7486c46594b2c)
+    │  • Extracted recovery.img SHA256: 8ff126c0acd2906c2dd4ce4942f1261f72b70e6cf4a8aa5b08f86e3864e0afce
+    │  • Functional fastbootd + unprivileged user ADB daemon.
+    │  • Serves as the verified input image for scripts/build-recovery.sh.
+    │
+    ▼
+3. This Project's Patch Series:
+    • Root ADB privilege retention (uid=0, gid=0, full Linux capabilities)
+    • SELinux global permissive (init patch + early-init setenforce 0)
+    • Unsigned package signature bypass (recovery 0x3f6bc)
+    • Metadata fallback to legacy Non-A/B update-binary (recovery 0x3d494)
+    • Userland compatibility (/sbin/sh, static BusyBox applets, blkid)
+    • Dynamic partition mapping (lpmode + lpmode-run wrapper)
+    │
+    ▼
+4. Final Verified Recovery Build (final2)
+    • recovery.img SHA256: 261f5c284a823cc8f9e309b4d589ca83cb6a98720d356c2e362a787b7449224a
+    • Odin TAR SHA256:     51e9a33e27d9d0b2849192d1c7acf88e62958a7fd4fc6121dc658b1c1649c48b
 ```
 
-Direct transformation of an untouched upstream stock recovery into this build has not been reproduced and is not supported.
+> [!IMPORTANT]
+> - **Historical Origin vs. Build Input**: `fastbootd-recovery.tar.md5` represents the historical starting point of fastbootd porting, whereas `recover.tar` (`8ff126c0...`) represents the subsequent milestone where user-shell ADB was working.
+> - The current `build-recovery.sh` takes `8ff126c0...` as its input base; automating the transition from `fastbootd-only` to `working ADB` is not yet implemented in this repository.
 
 ---
 

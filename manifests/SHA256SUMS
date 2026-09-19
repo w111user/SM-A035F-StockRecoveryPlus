@@ -1,6 +1,10 @@
-# Project Baseline (Fastbootd-Enabled SM-A035F Base Image)
-8ff126c0acd2906c2dd4ce4942f1261f72b70e6cf4a8aa5b08f86e3864e0afce  recovery_fastbootd_base.img
-eabb15415804aef5e2034c08e627456c115911abbab057fd85b7486c46594b2c  recover.tar (container archive of baseline)
+# Historical Origin: Earliest Fastbootd-Only Project Baseline (No Working ADB)
+# GitHub Release: https://github.com/w111user/Patch-Recovery/releases/download/25625329948/fastbootd-recovery.tar.md5
+a5294ab70c209fd0cc10abc294f4a867d6cc25cb02b984fd097d935c3c7e7101  fastbootd-recovery.tar.md5
+
+# Current Reproducible Build Input: Working ADB User-Shell Milestone
+eabb15415804aef5e2034c08e627456c115911abbab057fd85b7486c46594b2c  recover.tar (container archive)
+8ff126c0acd2906c2dd4ce4942f1261f72b70e6cf4a8aa5b08f86e3864e0afce  recovery_adb_user_base.img (recovery.img extracted from recover.tar)
 
 # Proven Helper Binaries
 20cd4d0014b920f5b799bd4ab03d93838886ecdcfff4e186a5b038070b4f0ae2  lpmode_pie_stripped

@@ -1,13 +1,20 @@
 # Architecture Overview
 
-This project builds upon an existing **fastbootd-enabled Samsung Galaxy A03 recovery base**, adding multi-format package support, unrestricted signature bypass, and dynamic partition mapping while maintaining the fastbootd service, stock recovery UI, and root ADB shell.
+This project builds upon a **working ADB user-shell milestone recovery** (which itself originated from an **earliest fastbootd-only recovery base**), adding multi-format package support, unrestricted signature bypass, and dynamic partition mapping while maintaining the fastbootd service, stock recovery UI, and root ADB shell.
 
 ```
 Samsung Stock Recovery Upstream
   │
   ▼
-Pre-Existing Fastbootd-Enabled SM-A035F Recovery Base
-  │  (SHA256: 8ff126c0acd2906c2dd4ce4942f1261f72b70e6cf4a8aa5b08f86e3864e0afce)
+Earliest Fastbootd-Only Project Baseline (No working ADB)
+  │  • Release: https://github.com/w111user/Patch-Recovery/releases/tag/25625329948
+  │  • Asset SHA256: a5294ab70c209fd0cc10abc294f4a867d6cc25cb02b984fd097d935c3c7e7101
+  │
+  ▼  [ADB Enablement Work — Historical milestone]
+  │
+Working ADB User-Shell Milestone / Base [Current Reproducible Build Input]
+  │  • Source: recover.tar (SHA256: eabb15415804aef5e2034c08e627456c115911abbab057fd85b7486c46594b2c)
+  │  • recovery.img SHA256: 8ff126c0acd2906c2dd4ce4942f1261f72b70e6cf4a8aa5b08f86e3864e0afce
   │
   ├── system/bin/init (patched: global permissive)
   │     ├── parses init.rc

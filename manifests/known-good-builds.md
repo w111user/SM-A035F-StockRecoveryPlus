@@ -13,13 +13,21 @@ Recovery boot image patch level: 2025-08
 Upstream Samsung Stock Recovery (pure stock, no fastbootd)
   │
   ▼
-Pre-existing Fastbootd-Enabled SM-A035F Recovery Base
-  (SHA256: 8ff126c0acd2906c2dd4ce4942f1261f72b70e6cf4a8aa5b08f86e3864e0afce)
-  │  • Has fastbootd service in init.rc and /system/bin/fastbootd
-  │  • Unpatched stock adbd, enforcing init, stock signature enforcement
+Earliest Fastbootd-Only Project Baseline (No working ADB)
+  │  • Release: https://github.com/w111user/Patch-Recovery/releases/tag/25625329948
+  │  • Asset: fastbootd-recovery.tar.md5
+  │  • Asset SHA256: a5294ab70c209fd0cc10abc294f4a867d6cc25cb02b984fd097d935c3c7e7101
+  │  • Working fastbootd service, but ADB was non-functional
+  │
+  ▼  [ADB Enablement Work — Not yet automated in build script]
+  │
+Working ADB User-Shell Milestone / Base [Current Reproducible Build Input]
+  │  • Source: recover.tar (SHA256: eabb15415804aef5e2034c08e627456c115911abbab057fd85b7486c46594b2c)
+  │  • recovery.img SHA256: 8ff126c0acd2906c2dd4ce4942f1261f72b70e6cf4a8aa5b08f86e3864e0afce
+  │  • Working fastbootd + working ADB daemon (unpatched stock user shell, enforcing init)
   │
   ▼  [Milestone 1: root_global_permissive]
-  │  • adbd 4-patch root (uid=0, gid=0, full caps)
+  │  • adbd privilege-retention patches (uid=0, gid=0, full caps)
   │  • init permissive patch (0xeb4c0) + init.rc early-init setenforce 0
   │
   ▼  [Milestone 2: root_permissive_unsigned_updates]
@@ -45,19 +53,23 @@ Pre-existing Fastbootd-Enabled SM-A035F Recovery Base
 
 ---
 
-## Baseline Recovery Image Metadata
+## Historical Origin vs. Reproducible Build Input
 
-The project starting image was extracted from `recover.tar`:
-- **File**: `recovery.img`
-- **SHA256**: `8ff126c0acd2906c2dd4ce4942f1261f72b70e6cf4a8aa5b08f86e3864e0afce`
-- **File Size**: `67,108,864` bytes (64 MB)
-- **Header Version**: `2`
-- **Kernel Size**: `23,717,904` bytes
-- **Ramdisk Size**: `11,319,676` bytes
-- **Recov DTBO Size**: `494,126` bytes
-- **DTB Size**: `179,505` bytes
-- **Recovery Boot Image OS Version**: `11.0.0`
-- **Recovery Boot Image Patch Level**: `2025-08`
-- **Page Size**: `2048`
-- **Name**: `SRPUH31A009`
-- **Kernel Cmdline**: `console=ttyS1,115200n8`
+1. **Historical Project Origin**:
+   - **File**: `fastbootd-recovery.tar.md5`
+   - **Repository**: `w111user/Patch-Recovery` (Release `25625329948`)
+   - **URL**: `https://github.com/w111user/Patch-Recovery/releases/download/25625329948/fastbootd-recovery.tar.md5`
+   - **SHA256**: `a5294ab70c209fd0cc10abc294f4a867d6cc25cb02b984fd097d935c3c7e7101`
+   - **Status**: Earliest functional fastbootd port, but did not have working ADB.
+
+2. **Current Reproducible Build Input (Working ADB User-Shell Milestone)**:
+   - **File**: `recovery.img` (extracted from `recover.tar`)
+   - **SHA256**: `8ff126c0acd2906c2dd4ce4942f1261f72b70e6cf4a8aa5b08f86e3864e0afce`
+   - **Container**: `recover.tar` (SHA256: `eabb15415804aef5e2034c08e627456c115911abbab057fd85b7486c46594b2c`)
+   - **File Size**: `67,108,864` bytes (64 MB)
+   - **Header Version**: `2`
+   - **Kernel Size**: `23,717,904` bytes | **Ramdisk Size**: `11,319,676` bytes
+   - **Recovery Boot Image OS Version**: `11.0.0`
+   - **Recovery Boot Image Patch Level**: `2025-08`
+   - **Name**: `SRPUH31A009` | **Cmdline**: `console=ttyS1,115200n8`
+   - **Note**: The current build scripts take this image as input. Re-creating the step from the fastbootd-only image to this working ADB image is not yet scripted.
