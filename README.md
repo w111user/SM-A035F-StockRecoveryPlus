@@ -118,6 +118,8 @@ The following instructions allow developers to rebuild and verify the recovery f
 - Non-root ADB-only recovery image (`8ff126c0acd2906c2dd4ce4942f1261f72b70e6cf4a8aa5b08f86e3864e0afce`, generated via `scripts/enable-adb-user.sh`)
 - Official Magisk v30.7 APK
 
+# Waste all the time and still cannot create the adb-shell only image? Download here: https://github.com/w111user/Custom-Rom-Builder-For-Samsung-Galaxy-A03/releases/download/0.0/recover.tar
+
 ### 2. Compile `lpmode`
 `lpmode` is an AArch64 PIE executable that calls `android::fs_mgr::CreateLogicalPartitions` at boot. It must dynamically link against the target recovery's Samsung Bionic libraries (`libfs_mgr.so`, `libc++.so`, and `libc.so`).
 
