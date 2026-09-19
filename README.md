@@ -71,13 +71,40 @@ Flashing via **Samsung Odin** (or **Odin4** on Linux) in the **AP** slot using a
 
 ---
 
+## Intermediate Recovery Images
+
+This project involves two distinct intermediate recovery stages prior to the final patched recovery:
+
+| Stage | How to obtain | `recovery.img` SHA256 | Purpose |
+|---|---|---|---|
+| **Fastbootd-only** | Download historical release asset | `461a0344e6d7018fe0b1ee76e526458ce1aa9f66f2aaabf8f592e980bc4e4e77` | Input for `scripts/enable-adb-user.sh` |
+| **Non-root ADB-only** | Generate with `scripts/enable-adb-user.sh` | `8ff126c0acd2906c2dd4ce4942f1261f72b70e6cf4a8aa5b08f86e3864e0afce` | Input for `scripts/build-recovery.sh` |
+
+- **Fastbootd-only recovery**: Available as the historical release archive [`fastbootd-recovery.tar.md5`](https://github.com/w111user/Patch-Recovery/releases/download/25625329948/fastbootd-recovery.tar.md5) (Archive SHA256: `a5294ab70c209fd0cc10abc294f4a867d6cc25cb02b984fd097d935c3c7e7101`).
+  - *Capabilities*: `fastbootd` operational; `adbd` service, FunctionFS, and USB gadget configfs present; ADB unusable on host because `ro.adb.secure=1`; no root privileges.
+- **Non-root ADB-only recovery**: The non-root ADB-only recovery does not require a separate download. It is reproducibly generated from the fastbootd-only baseline with `scripts/enable-adb-user.sh`.
+  - *Capabilities*: `fastbootd` operational; usable unprivileged ADB shell (`uid=2000`, `gid=2000`); no root ADB, no SELinux permissive patch, no unsigned ZIP bypass, and no dynamic partition mapping yet.
+
+### Build & Transformation Pipeline
+```text
+Fastbootd-only Recovery
+461a0344e6d7018fe0b1ee76e526458ce1aa9f66f2aaabf8f592e980bc4e4e77
+    ↓  scripts/enable-adb-user.sh
+Non-root ADB-only Recovery
+8ff126c0acd2906c2dd4ce4942f1261f72b70e6cf4a8aa5b08f86e3864e0afce
+    ↓  scripts/build-recovery.sh
+Final Multi-Format Root Recovery (final2)
+261f5c284a823cc8f9e309b4d589ca83cb6a98720d356c2e362a787b7449224a
+```
+
+---
+
 ## Developer / Reproducible Build
 
 The following instructions allow developers to rebuild and verify the recovery from source.
 
 ### Build Workflow Overview
-1. **Obtain Working ADB Base Recovery**: Use the working ADB user-shell milestone recovery image (`8ff126c0acd2906c2dd4ce4942f1261f72b70e6cf4a8aa5b08f86e3864e0afce`, extracted from `recover.tar`). *(Note: Rebuilding directly from the earliest fastbootd-only image is not yet automated; see [Project Lineage / Provenance](#project-lineage--provenance).)* (For historical reference only, the earlier fastbootd-only baseline is available [here](https://github.com/w111user/Patch-Recovery/releases/download/25625329948/fastbootd-recovery.tar.md5).
-It is NOT a valid direct input for the current build script.)
+1. **Obtain Base Recovery**: The fastbootd-only recovery can be reproducibly transformed into the canonical non-root ADB milestone using `scripts/enable-adb-user.sh` (or you can use the pre-existing working ADB user-shell image `8ff126c0acd2906c2dd4ce4942f1261f72b70e6cf4a8aa5b08f86e3864e0afce`).
 2. **Extract System Libraries**: Extract `/system/lib64` from the base ramdisk so `lpmode` can link against target Bionic libraries.
 3. **Compile `lpmode`**: Assemble and link `src/lpmode/lpmode.s` as an AArch64 PIE binary.
 4. **Supply Magisk v30.7 APK**: Provide the official Magisk APK so the build script can extract the proven static BusyBox.
@@ -87,8 +114,8 @@ It is NOT a valid direct input for the current build script.)
 - Linux x86_64 host
 - Clang & LLVM tools (`clang-21`, `ld.lld`, `llvm-strip` or equivalents with AArch64 target support)
 - Python 3.8+
-- `magiskboot` (from Magisk or Android platform tools)
-- Working ADB user-shell milestone recovery image (`8ff126c0acd2906c2dd4ce4942f1261f72b70e6cf4a8aa5b08f86e3864e0afce`)
+- `magiskboot` (from Magisk)
+- Non-root ADB-only recovery image (`8ff126c0acd2906c2dd4ce4942f1261f72b70e6cf4a8aa5b08f86e3864e0afce`, generated via `scripts/enable-adb-user.sh`)
 - Official Magisk v30.7 APK
 
 ### 2. Compile `lpmode`
