@@ -1,0 +1,117 @@
+{
+  "target_device": "Samsung Galaxy A03 (SM-A035F)",
+  "recovery_header_os_version": "11.0.0",
+  "recovery_header_patch_level": "2025-08",
+  "baseline_sha256": "8ff126c0acd2906c2dd4ce4942f1261f72b70e6cf4a8aa5b08f86e3864e0afce",
+  "binary_patches": {
+    "system/bin/recovery": [
+      {
+        "offset": "0x3d494",
+        "original_bytes": "600c0036",
+        "patched_bytes": "401b0036",
+        "instruction_orig": "tbz w0, #0, 0x3d620",
+        "instruction_patched": "tbz w0, #0, 0x3d7fc",
+        "description": "Bypass GetMetadata failure abort to branch into legacy Non-A/B SetUpNonAbUpdatePackage flow"
+      },
+      {
+        "offset": "0x3f6bc",
+        "original_bytes": "b4040034",
+        "patched_bytes": "25000014",
+        "instruction_orig": "cbz w20, #0x3f750",
+        "instruction_patched": "b #0x3f750",
+        "description": "Unsigned OTA and ZIP signature verification bypass"
+      }
+    ],
+    "system/bin/adbd": [
+      {
+        "offset": "0x883f8",
+        "original_bytes": "80000035",
+        "patched_bytes": "04000014",
+        "instruction_orig": "cbnz w0, #0x88408",
+        "instruction_patched": "b #0x88408",
+        "description": "Unconditional branch through privilege-retention path / bypasses a privilege-drop-related conditional"
+      },
+      {
+        "offset": "0x88410",
+        "original_bytes": "fed80194",
+        "patched_bytes": "1f2003d5",
+        "instruction_orig": "bl <helper>",
+        "instruction_patched": "nop",
+        "description": "NOPs one privilege-drop helper call in the adbd drop-privileges path"
+      },
+      {
+        "offset": "0x8841c",
+        "original_bytes": "e8d80194",
+        "patched_bytes": "1f2003d5",
+        "instruction_orig": "bl <helper>",
+        "instruction_patched": "nop",
+        "description": "NOPs another privilege-drop helper call in the adbd drop-privileges path"
+      },
+      {
+        "offset": "0x884e4",
+        "original_bytes": "9bd80194",
+        "patched_bytes": "e0031f2a",
+        "instruction_orig": "bl <helper>",
+        "instruction_patched": "mov w0, wzr",
+        "description": "Replaces a helper call with a successful zero return value, preserving the proven root/capability behavior"
+      }
+    ],
+    "system/bin/init": [
+      {
+        "offset": "0xeb4c0",
+        "original_bytes": "20008052",
+        "patched_bytes": "e0031f2a",
+        "instruction_orig": "mov w0, #1",
+        "instruction_patched": "mov w0, wzr",
+        "description": "Force global SELinux Permissive mode at kernel initialization"
+      }
+    ]
+  },
+  "compatibility_entries": [
+    {
+      "path": "sbin/sh",
+      "type": "symlink",
+      "target": "/system/bin/sh",
+      "description": "Required for legacy updater scripts starting with #!/sbin/sh"
+    },
+    {
+      "path": "sbin/busybox",
+      "type": "binary",
+      "description": "Static BusyBox extracted from Magisk v30.7 APK"
+    },
+    {
+      "path": "sbin/unzip",
+      "type": "symlink",
+      "target": "busybox",
+      "description": "Applet symlink for ZIP extraction in legacy updaters"
+    },
+    {
+      "path": "sbin/awk",
+      "type": "symlink",
+      "target": "busybox",
+      "description": "Applet symlink for text processing in update scripts"
+    },
+    {
+      "path": "sbin/hexdump",
+      "type": "symlink",
+      "target": "busybox",
+      "description": "Applet symlink for binary inspection in update scripts"
+    },
+    {
+      "path": "system/bin/blkid",
+      "type": "symlink",
+      "target": "/system/bin/toybox",
+      "description": "Required for disk and block UUID queries in updater-script"
+    },
+    {
+      "path": "system/bin/lpmode",
+      "type": "binary",
+      "description": "Dynamic partition mapper helper invoking libfs_mgr CreateLogicalPartitions"
+    },
+    {
+      "path": "system/bin/lpmode-run",
+      "type": "script",
+      "description": "Idempotent wrapper executing lpmode and waiting for uevent node creation"
+    }
+  ]
+}

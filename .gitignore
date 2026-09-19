@@ -1,0 +1,27 @@
+# Generated images and packages
+*.img
+*.tar
+*.tar.md5
+*.bin
+*.so
+
+# Build directories and unpack scratchpads
+unpack/
+verify/
+verify_final/
+final_verify/
+dist/
+build/
+*.o
+
+# Ramdisk artifacts
+ramdisk.cpio
+kernel
+dtb
+recovery_dtbo
+
+# Proprietary blobs and vendor trees
+stock/
+proprietary/
+__pycache__/
+*.pyc

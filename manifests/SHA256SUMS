@@ -1,0 +1,14 @@
+# Project Baseline (Fastbootd-Enabled SM-A035F Base Image)
+8ff126c0acd2906c2dd4ce4942f1261f72b70e6cf4a8aa5b08f86e3864e0afce  recovery_fastbootd_base.img
+eabb15415804aef5e2034c08e627456c115911abbab057fd85b7486c46594b2c  recover.tar (container archive of baseline)
+
+# Proven Helper Binaries
+20cd4d0014b920f5b799bd4ab03d93838886ecdcfff4e186a5b038070b4f0ae2  lpmode_pie_stripped
+4d60ab3f5a59ebb2ca863f2f514e6924401b581e9b64f602665c008177626651  busybox (from Magisk v30.7 lib/arm64-v8a/libbusybox.so)
+
+# Development Milestones
+1a24c8bf6be2695fd5946967d6be3f160310df9de1c80753ed458e7f0f815d21  recovery_userland_baseline.img
+
+# Final Verified Recovery (Milestone: final2)
+261f5c284a823cc8f9e309b4d589ca83cb6a98720d356c2e362a787b7449224a  recovery_lpmapped_final2.img
+51e9a33e27d9d0b2849192d1c7acf88e62958a7fd4fc6121dc658b1c1649c48b  recovery_root_permissive_multiformat_lpmapped_final2.tar
