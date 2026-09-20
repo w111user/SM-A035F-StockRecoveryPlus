@@ -15,4 +15,5 @@ eabb15415804aef5e2034c08e627456c115911abbab057fd85b7486c46594b2c  recover.tar (c
 
 # Final Verified Recovery (Milestone: final2)
 261f5c284a823cc8f9e309b4d589ca83cb6a98720d356c2e362a787b7449224a  recovery_lpmapped_final2.img
-51e9a33e27d9d0b2849192d1c7acf88e62958a7fd4fc6121dc658b1c1649c48b  recovery_root_permissive_multiformat_lpmapped_final2.tar
+51e9a33e27d9d0b2849192d1c7acf88e62958a7fd4fc6121dc658b1c1649c48b  recovery_root_permissive_multiformat_lpmapped_final2.tar (canonical release archive / build output)
+ec93fb8cd08060adc5a76b711eb0116d031ea118ca51f80bd5061d15d85bd18b  recovery_patched_epoch0.tar (alternative normalized epoch-0 test archive)

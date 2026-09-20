@@ -1,5 +1,12 @@
 # Changelog
 
+## Milestone 7 — Build System Determinism & Verification Hardening
+- Implemented deterministic CPIO archive packer (`scripts/pack-cpio.py`) normalizing sequential inode numbering, zeroing timestamps (`mtime=0`), sorting directory entries alphabetically, and matching Magiskboot CPIO binary specifications bit-for-bit.
+- Hardened `scripts/build-recovery.sh` with clean workspace isolation, strict fail-fast SHA256 validation on all inputs (base recovery image, Magisk BusyBox, stripped `lpmode`), explicit directory permission enforcement (`0755` on `/sbin`), and exact absolute symlinks (`/sbin/busybox`).
+- Implemented deterministic raw TAR archive packer (`scripts/pack-tar.py`) faithfully reproducing the canonical historical Odin TAR container (`51e9a33e27d9d0b2849192d1c7acf88e62958a7fd4fc6121dc658b1c1649c48b`) bit-for-bit across any POSIX platform.
+- Upgraded `scripts/verify-recovery.py` to support deep offline boot image and ramdisk CPIO verification, comparing boot header fields, kernel, DTBO, DTB, and entry-by-entry CPIO metadata.
+- Achieved 100% deterministic bit-for-bit byte-level reproducibility for both `recovery.img` (`261f5c28...`) and the canonical Odin TAR (`51e9a33e...`) across multiple isolated rebuilds.
+
 ## Milestone 6 — Dynamic Partition Mapper & Verified Magisk Sideload (`final2`)
 - Resolved SELinux domain transition failure by executing `/system/bin/lpmode-run` in `u:r:recovery:s0`.
 - Introduced `/system/bin/lpmode-run` wrapper with uevent polling loop to eliminate device node creation race condition.

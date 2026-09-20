@@ -47,8 +47,9 @@ Working ADB User-Shell Milestone / Base [Current Reproducible Build Input]
      • Idempotent wrapper /system/bin/lpmode-run with uevent poll loop
      • init.rc post-fs exec hook under u:r:recovery:s0 domain
      • Magisk v30.7 sideload verified successfully (exit status 0)
-     (SHA256: 261f5c284a823cc8f9e309b4d589ca83cb6a98720d356c2e362a787b7449224a)
-     (Odin TAR: 51e9a33e27d9d0b2849192d1c7acf88e62958a7fd4fc6121dc658b1c1649c48b)
+     (recovery.img: 261f5c284a823cc8f9e309b4d589ca83cb6a98720d356c2e362a787b7449224a)
+     (Canonical Final2 Odin TAR: 51e9a33e27d9d0b2849192d1c7acf88e62958a7fd4fc6121dc658b1c1649c48b)
+     (Alternative Epoch-0 TAR:   ec93fb8cd08060adc5a76b711eb0116d031ea118ca51f80bd5061d15d85bd18b)
 ```
 
 ---

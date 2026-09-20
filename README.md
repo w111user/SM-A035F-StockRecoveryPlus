@@ -52,7 +52,8 @@ If you only want to install and use this recovery, you **do not** need to compil
 - **Earliest Fastbootd-Only Baseline Asset SHA256**: `a5294ab70c209fd0cc10abc294f4a867d6cc25cb02b984fd097d935c3c7e7101`
 - **Working ADB User-Shell Milestone Recovery SHA256**: `8ff126c0acd2906c2dd4ce4942f1261f72b70e6cf4a8aa5b08f86e3864e0afce`
 - **Final2 Recovery Image SHA256**: `261f5c284a823cc8f9e309b4d589ca83cb6a98720d356c2e362a787b7449224a`
-- **Final2 Odin TAR SHA256**: `51e9a33e27d9d0b2849192d1c7acf88e62958a7fd4fc6121dc658b1c1649c48b`
+- **Final2 Odin TAR (Canonical) SHA256**: `51e9a33e27d9d0b2849192d1c7acf88e62958a7fd4fc6121dc658b1c1649c48b`
+- **Normalized Epoch-0 Odin TAR SHA256**: `ec93fb8cd08060adc5a76b711eb0116d031ea118ca51f80bd5061d15d85bd18b`
 
 > [!WARNING]
 > Binary patch offsets are **strictly firmware/build-specific** to this recovery image. Do not attempt to apply these raw offsets to other devices or differing firmware revisions without disassembling and verifying the target functions.
@@ -221,6 +222,36 @@ Execute the main build script:
 - Verifies all modifications using `scripts/verify-recovery.py`.
 - Repacks `ramdisk.cpio`, `recovery.img`, and generates `recovery_patched.tar`.
 
+### 4. Reproducible Build Verification
+
+The build process is 100% deterministic and byte-for-byte reproducible across independent build environments. When built from the canonical non-root ADB baseline image, the resulting `recovery.img` and Odin TAR match the verified canonical hashes exactly:
+
+| Artifact | Canonical SHA256 |
+|---|---|
+| **Base Input Image** (`recovery_fastbootd_adb_user.img`) | `8ff126c0acd2906c2dd4ce4942f1261f72b70e6cf4a8aa5b08f86e3864e0afce` |
+| **Stripped `lpmode` Binary** (`src/lpmode/lpmode_stripped`) | `20cd4d0014b920f5b799bd4ab03d93838886ecdcfff4e186a5b038070b4f0ae2` |
+| **Magisk v30.7 Static BusyBox** (`libbusybox.so`) | `4d60ab3f5a59ebb2ca863f2f514e6924401b581e9b64f602665c008177626651` |
+| **Final Repacked `recovery.img`** | `261f5c284a823cc8f9e309b4d589ca83cb6a98720d356c2e362a787b7449224a` |
+| **Final Odin TAR** (`recovery_patched.tar`) | `51e9a33e27d9d0b2849192d1c7acf88e62958a7fd4fc6121dc658b1c1649c48b` |
+| *Alternative Normalized Epoch-0 TAR* | `ec93fb8cd08060adc5a76b711eb0116d031ea118ca51f80bd5061d15d85bd18b` |
+
+#### Running Verification
+After building, verify the output image and unpack directory using `scripts/verify-recovery.py`:
+
+```bash
+# Verify modified ramdisk directory and repacked recovery.img
+python3 scripts/verify-recovery.py \
+    ./dist/work/ramdisk_root \
+    ./dist/recovery.img \
+    --expected-hash 261f5c284a823cc8f9e309b4d589ca83cb6a98720d356c2e362a787b7449224a
+```
+
+#### Determinism Guarantees
+- **Normalized Inodes & Timestamps**: The deterministic CPIO packer (`scripts/pack-cpio.py`) sets zeroed timestamps (`mtime=0`), normalized root ownership (`uid=0, gid=0`), and sequential inode numbering (`300000+`).
+- **Alphabetical Ordering**: Directory contents are ordered strictly alphabetically via byte-sorted names, eliminating filesystem-dependent `readdir()` traversal variances.
+- **Header & Footer Compliance**: Conforms directly to the `magiskboot cpio` binary specification, omitting root `.` directory entries and terminating with `TRAILER!!!` in mode `0755` without extraneous trailing block padding.
+- **Canonical Odin TAR Packaging (`scripts/pack-tar.py`)**: Assembles the outer Odin TAR container with the exact canonical historical metadata (GNU tar format, `mtime=15253427242` [1789800098], `uid/gid=1000`, `uname/gname=w11user`, mode `0644`, 20-block record alignment with 7 trailing zero blocks), guaranteeing bit-for-bit identity (`51e9a33e27d9d0b2849192d1c7acf88e62958a7fd4fc6121dc658b1c1649c48b`, `cmp` exit code 0). An alternative normalized epoch-0 tar (`ec93fb8c...`) was documented during initial reproducibility auditing.
+
 ---
 
 ## Project Lineage / Provenance
@@ -256,8 +287,9 @@ Upstream Samsung Stock Recovery (pure stock, no fastbootd)
     │
     ▼
 4. Final Verified Recovery Build (final2)
-    • recovery.img SHA256: 261f5c284a823cc8f9e309b4d589ca83cb6a98720d356c2e362a787b7449224a
-    • Odin TAR SHA256:     51e9a33e27d9d0b2849192d1c7acf88e62958a7fd4fc6121dc658b1c1649c48b
+    • recovery.img SHA256:         261f5c284a823cc8f9e309b4d589ca83cb6a98720d356c2e362a787b7449224a
+    • Canonical Final2 Odin TAR SHA: 51e9a33e27d9d0b2849192d1c7acf88e62958a7fd4fc6121dc658b1c1649c48b
+    • Normalized Epoch-0 TAR SHA:    ec93fb8cd08060adc5a76b711eb0116d031ea118ca51f80bd5061d15d85bd18b
 ```
 
 > [!IMPORTANT]
@@ -334,6 +366,8 @@ Final Multi-Format Root Recovery (final2, 261f5c28...)
 .
 ├── docs/                     # Technical documentation & runtime proofs
 │   ├── architecture.md       # Overall architecture & execution flow
+│   ├── build-reproducibility-audit.md # Reproducibility forensic audit & CPIO analysis
+│   ├── forensics-fastbootd-vs-adb-user.md # ADB enablement forensic comparison
 │   ├── patch-notes.md        # Binary patch breakdowns & disassembly
 │   ├── dynamic-partitions.md # Dynamic partition mapper explanation
 │   ├── magisk-sideload.md    # Sideload execution & compatibility notes
@@ -347,8 +381,10 @@ Final Multi-Format Root Recovery (final2, 261f5c28...)
 │   ├── avbtool 
 │   ├── build-recovery.sh     # Repack workflow (requires fastbootd base & Magisk APK)
 │   ├── enable-adb-user.sh    # Historical non-root ADB enablement script
+│   ├── pack-cpio.py          # Deterministic CPIO archive packer
+│   ├── pack-tar.py           # Deterministic Odin TAR archive packer
 │   ├── patch-recovery.py     # Binary patcher using offsets.json
-│   ├── verify-recovery.py    # Offline patch & link verifier
+│   ├── verify-recovery.py    # Offline patch, image, and link verifier
 │   ├── magiskboot
 │   └── lpmode-run            # Idempotent init wrapper for lpmode
 ├── patches/                  # Binary patch definitions & diffs
