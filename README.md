@@ -121,14 +121,79 @@ The following instructions allow developers to rebuild and verify the recovery f
 # Waste all the time and still cannot create the adb-shell only image? Download [here](https://github.com/w111user/Custom-Rom-Builder-For-Samsung-Galaxy-A03/releases/download/0.0/recover.tar)
 
 ### 2. Compile `lpmode`
-`lpmode` is an AArch64 PIE executable that calls `android::fs_mgr::CreateLogicalPartitions` at boot. It must dynamically link against the target recovery's Samsung Bionic libraries (`libfs_mgr.so`, `libc++.so`, and `libc.so`).
 
-Extract `system/lib64` from your baseline recovery ramdisk, then run:
-```bash
-./src/lpmode/build.sh /path/to/extracted/system/lib64
+`lpmode` is an AArch64 PIE executable that calls:
+```text
+android::fs_mgr::CreateLogicalPartitions
 ```
-Verify that the output binary (`src/lpmode/lpmode_stripped`) has SHA256:
-`20cd4d0014b920f5b799bd4ab03d93838886ecdcfff4e186a5b038070b4f0ae2`
+It must dynamically link against the Samsung recovery Bionic libraries (`libfs_mgr.so`, `libc++.so`, and `libc.so`) from the target recovery.
+
+> [!IMPORTANT]
+> `/system/lib64` must **not** be taken from arbitrary firmware or GSI images. It must come directly from the project's verified recovery baseline (`8ff126c0...`) because `lpmode` is linked against the specific Samsung/Bionic symbol definitions and runtime libraries of that target recovery.
+
+#### Step-by-Step Extraction & Build
+
+1. **Prepare a temporary extraction workspace and copy the canonical non-root ADB baseline image**:
+
+```bash
+mkdir -p /tmp/sm-a035f-lpmode
+cd /tmp/sm-a035f-lpmode
+
+cp /path/to/recovery_fastbootd_adb_user.img recovery.img
+
+sha256sum recovery.img
+```
+
+The SHA256 hash must match:
+```text
+8ff126c0acd2906c2dd4ce4942f1261f72b70e6cf4a8aa5b08f86e3864e0afce
+```
+
+2. **Unpack the recovery image and extract the ramdisk filesystem**:
+
+```bash
+/path/to/magiskboot unpack recovery.img
+
+mkdir ramdisk_root
+cd ramdisk_root
+
+/path/to/magiskboot cpio ../ramdisk.cpio extract
+```
+
+3. **Compile `lpmode` using the extracted `system/lib64` libraries**:
+
+```bash
+cd /path/to/SM-A035F-StockRecoveryPlus
+
+./src/lpmode/build.sh \
+    /tmp/sm-a035f-lpmode/ramdisk_root/system/lib64
+```
+
+4. **Verify the resulting binary hash**:
+
+```bash
+sha256sum src/lpmode/lpmode_stripped
+```
+
+Expected SHA256:
+```text
+20cd4d0014b920f5b799bd4ab03d93838886ecdcfff4e186a5b038070b4f0ae2
+```
+
+5. **Verify ELF binary properties**:
+
+```bash
+file src/lpmode/lpmode_stripped
+readelf -h src/lpmode/lpmode_stripped
+readelf -d src/lpmode/lpmode_stripped
+```
+
+The expected verification results are:
+- Architecture: **AArch64 / ARM64**
+- Type: **ELF ET_DYN / PIE** (Position-Independent Executable)
+- Dynamic Linking: Dynamically linked against the target recovery libraries (`libfs_mgr.so`, `libc++.so`, `libc.so`) with dynamic linker `/system/bin/linker64`
+- SHA256: Exactly matches the known-good `lpmode_stripped` (`20cd4d0014b920f5b799bd4ab03d93838886ecdcfff4e186a5b038070b4f0ae2`)
+
 
 ### 3. Patch & Repack Recovery
 Execute the main build script:
